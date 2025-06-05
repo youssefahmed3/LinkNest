@@ -1,5 +1,5 @@
 import * as testService from '../services/test.service';
-
+import { db } from '../drizzle';
 export function getTest(req, res) {
     const test = testService.getTest();
     res.send(test);
