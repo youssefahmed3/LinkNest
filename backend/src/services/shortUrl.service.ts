@@ -3,7 +3,7 @@ import { db } from '../drizzle/index';
 import { linkTable, visitTable } from '../drizzle/schema';
 import { ShortenUrlInput } from '../models/url';
 import { v4 as uuidv4 } from "uuid";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 
 type userInfo = {
     ip_address: string,
@@ -68,11 +68,91 @@ export async function getShortUrl(slug: string, userInfo: userInfo) {
         })
 
         await db
-        .update(linkTable)
-        .set({ click_count: original_url[0].click_count + 1 })
-        .where(eq(linkTable.id, original_url[0].id))
+            .update(linkTable)
+            .set({ click_count: original_url[0].click_count + 1 })
+            .where(eq(linkTable.id, original_url[0].id))
     }
 
 
     return original_url;
+}
+
+
+export async function getAllShortUrlsForUser(userid: string) {
+    const links = await db.select().from(linkTable).where(eq(linkTable.createdby, userid));
+    return links;
+}
+
+export async function deleteShortUrl(slug: string, id: string) {
+    const links = await db.delete(linkTable).where(and(eq(linkTable.short_slug, slug), eq(linkTable.createdby, id)))
+    return links;
+}
+
+
+
+export async function getUserClicksAnalysis(userId: string) {
+    // Total clicks for all links created by the user
+  const totalClicksResult = await db
+    .select({
+      totalClicks: sql<number>`SUM(${visitTable.id} IS NOT NULL)`.mapWith(Number),
+    })
+    .from(visitTable)
+    .innerJoin(linkTable, eq(visitTable.link_id, linkTable.id))
+    .where(eq(linkTable.createdby, userId));
+
+  const totalClicks = totalClicksResult[0]?.totalClicks ?? 0;
+
+  // The most clicked link by visit count
+  const mostClickedLinkResult = await db
+    .select({
+      linkId: linkTable.id,
+      originalUrl: linkTable.original_url,
+      short_slug: linkTable.short_slug,
+      clickCount: sql<number>`COUNT(${visitTable.id})`.mapWith(Number),
+    })
+    .from(visitTable)
+    .innerJoin(linkTable, eq(visitTable.link_id, linkTable.id))
+    .where(eq(linkTable.createdby, userId))
+    .groupBy(linkTable.id, linkTable.original_url)
+    .orderBy(sql`COUNT(${visitTable.id}) DESC`)
+    .limit(1);
+
+  const mostClickedLink = mostClickedLinkResult[0] ?? null;
+
+  // The country with the most visits for this user's links
+  const mostCountryResult = await db
+    .select({
+      country: visitTable.country,
+      visitCount: sql<number>`COUNT(*)`.mapWith(Number),
+    })
+    .from(visitTable)
+    .innerJoin(linkTable, eq(visitTable.link_id, linkTable.id))
+    .where(eq(linkTable.createdby, userId))
+    .groupBy(visitTable.country)
+    .orderBy(sql`COUNT(*) DESC`)
+    .limit(1);
+
+  const mostCountry = mostCountryResult[0] ?? null;
+
+  // The referrer with the most visits for this user's links
+  const mostReferrerResult = await db
+    .select({
+      referrer: visitTable.referrer,
+      visitCount: sql<number>`COUNT(*)`.mapWith(Number),
+    })
+    .from(visitTable)
+    .innerJoin(linkTable, eq(visitTable.link_id, linkTable.id))
+    .where(eq(linkTable.createdby, userId))
+    .groupBy(visitTable.referrer)
+    .orderBy(sql`COUNT(*) DESC`)
+    .limit(1);
+
+  const mostReferrer = mostReferrerResult[0] ?? null;
+
+  return {
+    totalClicks,
+    mostClickedLink,
+    mostCountry,
+    mostReferrer,
+  };
 }

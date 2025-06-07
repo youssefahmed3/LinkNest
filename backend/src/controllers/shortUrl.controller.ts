@@ -9,11 +9,8 @@ import { fromNodeHeaders } from "better-auth/node";
 
 export async function shortenUrl(req: any, res: any) {
     const session = await auth.api.getSession({
-      headers: fromNodeHeaders(req.headers),
+        headers: fromNodeHeaders(req.headers),
     });
-
-
-
 
     const parseResult = ShortenUrlSchemaInput.safeParse(req.body);
 
@@ -28,6 +25,14 @@ export async function shortenUrl(req: any, res: any) {
     const qrCodeImage = await QRCode.toDataURL(shortUrl);
     /* Return the link */
     res.status(201).json({ shortUrl, qrCodeImage });
+}
+
+export async function getAllShortUrlsForUser(req: any, res: any) {
+    const session = await auth.api.getSession({
+        headers: fromNodeHeaders(req.headers),
+    });
+    const links = await shortUrlService.getAllShortUrlsForUser(session?.user.id as string);
+    res.status(200).json(links);
 }
 
 export async function getShortUrl(req: any, res: any) {
@@ -51,4 +56,23 @@ export async function getShortUrl(req: any, res: any) {
     const link = await shortUrlService.getShortUrl(slug, userInfo);
     // res.status(200).json(link[0].original_url);
     res.redirect(link[0].original_url);
+}
+
+
+export async function deleteShortUrl(req: any, res: any) {
+    const session = await auth.api.getSession({
+        headers: fromNodeHeaders(req.headers),
+    });
+    const slug = req.params.slug;
+    const links = await shortUrlService.deleteShortUrl(slug, session?.user.id as string);
+    res.status(200).json(links);
+}
+
+
+export async function getUserClicksAnalysis(req: any, res: any) {
+    const session = await auth.api.getSession({
+        headers: fromNodeHeaders(req.headers),
+    });
+    const analytics = await shortUrlService.getUserClicksAnalysis(session?.user.id as string);
+    res.status(200).json(analytics);
 }

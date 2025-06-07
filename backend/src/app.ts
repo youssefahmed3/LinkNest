@@ -4,8 +4,16 @@ import { auth } from './utils/auth';
 import shortUrl from './routes/shortUrl.routes';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
+import cors from "cors";
 
 const app = express();
+
+app.use(
+  cors({
+    origin: "http://localhost:3000", // Your Next.js frontend origin
+    credentials: true,               // Needed to allow cookies to be sent
+  })
+);
 
 // Logs in 'dev' format (method, URL, status, response time)
 app.use(morgan('dev'));
