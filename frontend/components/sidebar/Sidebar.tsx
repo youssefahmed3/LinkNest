@@ -22,7 +22,7 @@ import { Home, Settings } from "lucide-react";
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"; */
-import { useSession } from "@/lib/authClient";
+
 
 // Menu items.
 const items = [
