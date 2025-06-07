@@ -6,7 +6,7 @@ export default defineConfig({
   out: './src/drizzle/migrations',
   dialect: 'sqlite',
   dbCredentials: {
-    url: process.env.DB_FILE_NAME!
+    url: process.env.DB_FILE_NAME! as string
   },
   verbose: true,
   strict: true
