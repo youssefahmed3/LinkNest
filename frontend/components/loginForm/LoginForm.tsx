@@ -46,24 +46,34 @@ function LoginForm() {
     try {
       setIsLoading(true);
 
-      await authClient.signIn.email(
-        {
-          email: payload.email,
+      const res = await authClient.signIn.email({
+        email: payload.email,
 
-          password: payload.password,
+        password: payload.password,
 
-          rememberMe: false,
-        },
-      );
-
-      toast("Login Successfully", {
-        action: {
-          label: "Undo",
-          onClick: () => console.log("Undo"),
-        },
+        rememberMe: false,
       });
 
-      router.push("/dashboard");
+      if (res.data?.user) {
+        toast("Login Successfully", {
+          action: {
+            label: "Undo",
+            onClick: () => console.log("Undo"),
+          },
+        });
+
+        router.push("/dashboard");
+      }
+      else {
+        form.reset();
+        toast("Error Creating Account", {
+          description: "Invalid Credentials",
+          action: {
+            label: "Undo",
+            onClick: () => console.log("Undo"),
+          },
+        });
+      }
     } catch (error) {
       toast("Error Creating Account", {
         description: error as string,

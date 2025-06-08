@@ -86,7 +86,8 @@ function RegisterForm() {
           },
           onError: (ctx) => {
             // display the error message
-            toast.error(`${ctx.error}`, {
+            form.reset();
+            toast.error(`${ctx.error.message}`, {
               description: "Error Creating Account",
               action: {
                 label: "Undo",

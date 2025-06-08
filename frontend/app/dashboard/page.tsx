@@ -13,10 +13,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+// import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
-import { set, z } from "zod";
+import {  z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/form";
 import { Icons } from "@/components/icons";
 import dayjs from "dayjs";
+import Image from "next/image";
+import { copyToClipboard } from "@/lib/utils";
 
 type userAnalyticsType = {
   totalClicks: number;
@@ -55,6 +57,13 @@ function Page() {
   const [data, setData] = useState([]);
   const [userAnalytics, setUserAnalytics] = useState<userAnalyticsType>();
   const [refreshTable, setRefreshTable] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false); // for the close of the dialog
+  const [generatedResult, setGeneratedResult] = useState<null | {
+    shortUrl: string;
+    qrCodeImage: string;
+  }>(null);
+
+  const [showResultDialog, setShowResultDialog] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -113,8 +122,19 @@ function Page() {
       });
       console.log(res);
       if (res.ok) {
+        const data = await res.json();
         setRefreshTable((prev) => !prev); // <- triggers useEffect
+
+        form.reset(); // reset form
+
+        setDialogOpen(false); // CLOSE the dialog
+
+        setGeneratedResult({
+          shortUrl: data.shortUrl,
+          qrCodeImage: data.qrCodeImage,
+        });
       }
+      setShowResultDialog(true);
     } catch (error) {
       console.log(error);
     } finally {
@@ -161,7 +181,8 @@ function Page() {
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold">Links</h2>
-          <Dialog>
+          {/* Generate a new link Dialog */}
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-gray-700 text-white" variant="outline">
                 Open Dialog
@@ -176,7 +197,6 @@ function Page() {
                 </DialogDescription>
               </DialogHeader>
 
-              {/* FORM SHOULD BE INSIDE DIALOG CONTENT */}
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(onSubmit)}
@@ -217,6 +237,40 @@ function Page() {
                   </DialogFooter>
                 </form>
               </Form>
+            </DialogContent>
+          </Dialog>
+
+          {/* Result Dialog */}
+          <Dialog open={showResultDialog} onOpenChange={setShowResultDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Link Created Successfully</DialogTitle>
+                <DialogDescription>
+                  Here’s your new short link and QR code.
+                </DialogDescription>
+              </DialogHeader>
+
+              {generatedResult && (
+                <div className="flex flex-col items-center gap-4 mt-4">
+                  <div className="flex flex-col gap-2 justify-between items-center">
+                    <p className="font-semibold">{generatedResult.shortUrl}</p>
+                    <Button variant={"outline"} onClick={() => copyToClipboard(generatedResult.shortUrl)}>Copy Link To Clipboard</Button>
+                  </div>
+
+                  <Image
+                    src={generatedResult.qrCodeImage}
+                    alt="QR Code"
+                    width={200}
+                    height={200}
+                  />
+                </div>
+              )}
+
+              <DialogFooter>
+                <Button onClick={() => setShowResultDialog(false)}>
+                  Close
+                </Button>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
