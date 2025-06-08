@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 // import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
-import {  z } from "zod";
+import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
@@ -30,6 +30,9 @@ import { Icons } from "@/components/icons";
 import dayjs from "dayjs";
 import Image from "next/image";
 import { copyToClipboard } from "@/lib/utils";
+import AnalyticsCard from "@/components/AnalyticsCard/AnalyticsCard";
+import { Earth, MousePointerClick, UsersRound } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 type userAnalyticsType = {
   totalClicks: number;
@@ -145,38 +148,35 @@ function Page() {
   return (
     <div className="flex flex-col gap-4 w-full py-2 ">
       <h1 className="text-2xl font-bold">Dashboard</h1>
+      <Separator className="my-4" />
 
       {/* Analytics */}
-      <div className="flex gap-2 flex-wrap justify-around">
-        <div className="flex flex-col bg-gray-800 text-white p-2 rounded-2xl text-center">
-          <p className="font-bold">Total Clicks</p>
-          <p>{userAnalytics?.totalClicks}</p>
-        </div>
 
-        <div className="flex flex-col bg-gray-800 text-white p-2 rounded-2xl text-center">
-          <p className="font-bold">Top Country</p>
-          <p>
-            {userAnalytics?.mostCountry?.country} &#8212;{" "}
-            {userAnalytics?.mostCountry?.visitCount}
-          </p>
-        </div>
+      <div className="flex justify-around">
+        <AnalyticsCard
+          data={userAnalytics?.totalClicks}
+          icon={<MousePointerClick />}
+          title="Total Clicks"
+        />
+        <AnalyticsCard
+          data={userAnalytics?.mostCountry?.country == "Unknown" ? "Other" : userAnalytics?.mostCountry?.country }
+          icon={<Earth />}
+          title="Top Country"
+        />
 
-        <div className="flex flex-col bg-gray-800 text-white p-2 rounded-2xl text-center">
-          <p className="font-bold">Top referrer</p>
-          <p>
-            {userAnalytics?.mostReferrer?.referrer} &#8212;{" "}
-            {userAnalytics?.mostReferrer?.visitCount}
-          </p>
-        </div>
+        <AnalyticsCard
+          data={userAnalytics?.mostReferrer?.referrer == "Unknown" ? "Other" : userAnalytics?.mostReferrer?.referrer}
+          icon={<UsersRound />}
+          title="Top referrer"
+        />
 
-        <div className="flex flex-col bg-gray-800 text-white p-2 rounded-2xl text-center">
-          <p className="font-bold">Top Clicked Link</p>
-          <p>
-            {userAnalytics?.mostClickedLink?.short_slug} &#8212; {""}
-            {userAnalytics?.mostClickedLink?.clickCount}
-          </p>
-        </div>
+        <AnalyticsCard
+          data={userAnalytics?.mostClickedLink?.short_slug}
+          icon={<MousePointerClick />}
+          title="Top Clicked Link"
+        />
       </div>
+      <Separator className="my-4" />
 
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
@@ -185,7 +185,7 @@ function Page() {
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-gray-700 text-white" variant="outline">
-                Open Dialog
+                Generate A Link
               </Button>
             </DialogTrigger>
 
@@ -254,7 +254,12 @@ function Page() {
                 <div className="flex flex-col items-center gap-4 mt-4">
                   <div className="flex flex-col gap-2 justify-between items-center">
                     <p className="font-semibold">{generatedResult.shortUrl}</p>
-                    <Button variant={"outline"} onClick={() => copyToClipboard(generatedResult.shortUrl)}>Copy Link To Clipboard</Button>
+                    <Button
+                      variant={"outline"}
+                      onClick={() => copyToClipboard(generatedResult.shortUrl)}
+                    >
+                      Copy Link To Clipboard
+                    </Button>
                   </div>
 
                   <Image
